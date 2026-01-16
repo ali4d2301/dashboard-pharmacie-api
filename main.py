@@ -4,16 +4,18 @@ import os
 
 app = FastAPI(title="Pharmacie API")
 
-# Autoriser Vue (dev)
-origins = os.getenv(
-    "CORS_ORIGINS",
-    "http://localhost:5173"
-).split(",")
+# Autoriser les origines (Render / dev / prod)
+origins_env = os.getenv("CORS_ORIGINS", "")
+origins = [o.strip() for o in origins_env.split(",") if o.strip()]
+
+# fallback dev si variable absente
+if not origins:
+    origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
