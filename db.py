@@ -7,8 +7,9 @@ DATABASE_URL = os.environ["DATABASE_URL"]  # obligatoire en prod
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
-    connect_args={"ssl": {}},
+    connect_args={"ssl": {"ssl_mode": "REQUIRED"}},
 )
+
 
 SessionLocal = sessionmaker(
     autocommit=False,
