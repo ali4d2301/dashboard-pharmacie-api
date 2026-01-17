@@ -10,7 +10,7 @@ origins = [o.strip() for o in origins_env.split(",") if o.strip()]
 
 # fallback dev si variable absente
 if not origins:
-    origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
+    origins = ["http://localhost:5173", "http://127.0.0.1:5173", "https://pharmacie-management.netlify.app"]
 
 app.add_middleware(
     CORSMiddleware,
