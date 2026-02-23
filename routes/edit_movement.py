@@ -8,8 +8,13 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from db import get_db
+from deps_auth import require_role
 
-router = APIRouter(prefix="/api/movements", tags=["mouvements"])
+router = APIRouter(
+    prefix="/api/movements",
+    tags=["mouvements"],
+    dependencies=[Depends(require_role("admin"))],
+)
 
 # Nom exact de la table (backticks si elle commence par 0_)
 TABLE = "`0_mouvement_stock`"  # adapte si besoin

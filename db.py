@@ -1,26 +1,17 @@
-import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from settings import settings
 
-DATABASE_URL = os.environ["DATABASE_URL"]  # obligatoire en prod
-
+# Engine SQLAlchemy (MySQL Aiven)
 engine = create_engine(
-    DATABASE_URL,
+    settings.DATABASE_URL,
     pool_pre_ping=True,
-    connect_args={"ssl": {"ssl_mode": "REQUIRED"}},
+    pool_recycle=280,
 )
 
-
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine,
-)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def get_db():
-    """
-    Fournit une session DB à FastAPI
-    """
     db = SessionLocal()
     try:
         yield db

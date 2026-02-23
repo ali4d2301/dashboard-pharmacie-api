@@ -2,8 +2,13 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from db import get_db
+from deps_auth import require_role
 
-router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
+router = APIRouter(
+    prefix="/api/dashboard",
+    tags=["dashboard"],
+    dependencies=[Depends(require_role("admin", "viewer"))],
+)
 
 @router.get("/list_products")
 def list_products(db: Session = Depends(get_db)):

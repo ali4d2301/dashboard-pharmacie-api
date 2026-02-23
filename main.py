@@ -2,7 +2,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
-app = FastAPI(title="Pharmacie API")
+#app = FastAPI(title="Pharmacie API")
+
+ENV = os.getenv("ENV", "dev")
+app = FastAPI(
+    title="Pharmacie API",
+    docs_url=None if ENV == "prod" else "/docs",
+    redoc_url=None if ENV == "prod" else "/redoc",
+)
 
 # Autoriser les origines (Render / dev / prod)
 origins_env = os.getenv("CORS_ORIGINS", "")
@@ -42,3 +49,6 @@ app.include_router(insert_move)
 
 from routes.edit_movement import router as edit_move
 app.include_router(edit_move)
+
+from routes.auth import router as auth_router
+app.include_router(auth_router)

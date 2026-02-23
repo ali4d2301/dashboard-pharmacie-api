@@ -1,9 +1,14 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from db import get_db, engine
+from db import get_db
+from deps_auth import require_role
 
-router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
+router = APIRouter(
+    prefix="/api/dashboard",
+    tags=["dashboard"],
+    dependencies=[Depends(require_role("admin", "viewer"))],
+)
 
 @router.get("/classes")
 def get_classes(db: Session = Depends(get_db)):

@@ -1,11 +1,15 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from typing import Optional
 from db import get_db
-from fastapi import Depends
+from deps_auth import require_role
 
-router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
+router = APIRouter(
+    prefix="/api/dashboard",
+    tags=["dashboard"],
+    dependencies=[Depends(require_role("admin", "viewer"))],
+)
 
 ALLOWED_SORT = {
     "date_mvt", "nom_produit", "forme", "dosage", "classe", "cible", "unite",

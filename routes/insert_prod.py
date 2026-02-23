@@ -1,14 +1,19 @@
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import  text
 from db import get_db, engine
+from deps_auth import require_role
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import IntegrityError
 
 from datetime import date
 from typing import Optional
 
-router = APIRouter(prefix="/api/products", tags=["products"])
+router = APIRouter(
+    prefix="/api/products",
+    tags=["products"],
+    dependencies=[Depends(require_role("admin"))],
+)
 
 TABLE = "`0_products`"
 

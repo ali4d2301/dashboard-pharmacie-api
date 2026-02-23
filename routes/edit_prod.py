@@ -5,8 +5,13 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 from db import get_db
+from deps_auth import require_role
 
-router = APIRouter(prefix="/api/products", tags=["products"])
+router = APIRouter(
+    prefix="/api/products",
+    tags=["products"],
+    dependencies=[Depends(require_role("admin"))],
+)
 
 TABLE = "`0_products`"
 

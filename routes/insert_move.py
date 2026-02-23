@@ -7,8 +7,13 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from db import get_db
+from deps_auth import require_role
 
-router = APIRouter(prefix="/api", tags=["mouvements"])
+router = APIRouter(
+    prefix="/api",
+    tags=["mouvements"],
+    dependencies=[Depends(require_role("admin"))],
+)
 
 # ✅ adapte si ta liste ENUM exacte diffère
 MOUVEMENTS_ALLOWED = {"achat", "vente", "perte", "peremption", "don", "ajustement positif", "ajustement negatif"}
