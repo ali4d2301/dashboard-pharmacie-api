@@ -19,7 +19,8 @@ def get_classes(db: Session = Depends(get_db)):
     sql = text("""
         SELECT DISTINCT classe
         FROM `0_products`
-        WHERE classe IS NOT NULL AND classe <> ''
+        WHERE statut = 'Actif'
+          AND classe IS NOT NULL AND classe <> ''
         ORDER BY classe
     """)
     rows = db.execute(sql).mappings().all()
@@ -34,14 +35,24 @@ def get_kpis(
     db: Session = Depends(get_db),
 ):
     classe_norm = "Tout" if (classe or "").strip().upper() == "ALL" else (classe or "Tout").strip()
+    month_context = build_month_context(annee, mois)
 
     sql_rows_period = text("""
         SELECT COUNT(*) AS n
         FROM tb_dashboard d
+        JOIN `0_products` p ON p.code = d.code_produit
         WHERE YEAR(d.date_mvt) = :annee
           AND MONTH(d.date_mvt) = :mois
+          AND p.statut = 'Actif'
+          AND (:classe = 'Tout' OR p.classe = :classe)
     """)
-    rows_period = int(db.execute(sql_rows_period, {"annee": annee, "mois": mois}).scalar() or 0)
+    rows_period = int(
+        db.execute(
+            sql_rows_period,
+            {"annee": annee, "mois": mois, "classe": classe_norm},
+        ).scalar()
+        or 0
+    )
 
     sql_expiring_products = text("""
         SELECT COUNT(DISTINCT pl.code_prod) AS nb
@@ -64,9 +75,11 @@ def get_kpis(
     sql_products_with_movements = text("""
         SELECT COUNT(DISTINCT d.code_produit) AS nb
         FROM tb_dashboard d
+        JOIN `0_products` p ON p.code = d.code_produit
         WHERE YEAR(d.date_mvt) = :annee
           AND MONTH(d.date_mvt) = :mois
-          AND (:classe = 'Tout' OR d.classe = :classe)
+          AND p.statut = 'Actif'
+          AND (:classe = 'Tout' OR p.classe = :classe)
     """)
     nb_produits_mouvement = int(
         db.execute(
@@ -85,23 +98,39 @@ def get_kpis(
     denom = int(db.execute(sql_denom, {"classe": classe_norm}).scalar() or 0)
 
     sql_num = text("""
-        WITH last_mvt AS (
-            SELECT d.code_produit, MAX(d.id_mvt_source) AS last_id
+        WITH latest_dates AS (
+            SELECT d.code_produit, MAX(d.date_mvt) AS max_date
             FROM tb_dashboard d
-            WHERE YEAR(d.date_mvt) = :annee
-              AND MONTH(d.date_mvt) = :mois
-              AND (:classe = 'Tout' OR d.classe = :classe)
+            JOIN `0_products` p
+              ON p.code = d.code_produit
+            WHERE d.date_mvt < :date_to
+              AND p.statut = 'Actif'
+              AND (:classe = 'Tout' OR p.classe = :classe)
             GROUP BY d.code_produit
+        ),
+        latest_ids AS (
+            SELECT d.code_produit, d.date_mvt, MAX(d.id_mvt_source) AS max_id
+            FROM tb_dashboard d
+            JOIN latest_dates ld
+              ON ld.code_produit = d.code_produit
+             AND ld.max_date = d.date_mvt
+            GROUP BY d.code_produit, d.date_mvt
         )
         SELECT COUNT(*) AS num
-        FROM last_mvt lm
-        JOIN tb_dashboard d ON d.id_mvt_source = lm.last_id
-        JOIN `0_products` p ON p.code = lm.code_produit
-        WHERE p.statut = 'Actif'
-          AND (:classe = 'Tout' OR p.classe = :classe)
-          AND COALESCE(d.stock_apres, 0) > 0
+        FROM latest_ids li
+        JOIN tb_dashboard d
+          ON d.code_produit = li.code_produit
+         AND d.date_mvt = li.date_mvt
+         AND d.id_mvt_source = li.max_id
+        WHERE COALESCE(d.stock_apres, 0) > 0
     """)
-    num = int(db.execute(sql_num, {"annee": annee, "mois": mois, "classe": classe_norm}).scalar() or 0)
+    num = int(
+        db.execute(
+            sql_num,
+            {"classe": classe_norm, **month_context},
+        ).scalar()
+        or 0
+    )
 
     taux_disponibilite = 0.0 if denom == 0 else (num / denom) * 100.0
 
@@ -280,6 +309,7 @@ LEFT JOIN nearest_expiry_qty neq
   ON neq.code_prod = cur.code_prod
  AND neq.date_peremption = ne.prochaine_peremption
 WHERE cur.mois = :ym
+  AND p.statut = 'Actif'
   AND (:classe = 'Tout' OR p.classe = :classe)
 ORDER BY p.produit ASC;
 """)
