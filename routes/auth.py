@@ -12,6 +12,13 @@ class LoginIn(BaseModel):
     username: str
     password: str
 
+
+@router.get("/ready")
+def auth_ready(db: Session = Depends(get_db)):
+    db.execute(text("SELECT 1"))
+    return {"status": "ok"}
+
+
 @router.post("/login")
 def login(data: LoginIn, db: Session = Depends(get_db)):
     user = db.execute(

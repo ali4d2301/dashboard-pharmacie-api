@@ -1,6 +1,9 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import os
+
+from settings import settings
 
 #app = FastAPI(title="Pharmacie API")
 
@@ -12,8 +15,7 @@ app = FastAPI(
 )
 
 # Autoriser les origines (Render / dev / prod)
-origins_env = os.getenv("CORS_ORIGINS", "")
-origins = [o.strip() for o in origins_env.split(",") if o.strip()]
+origins = [o.strip().rstrip("/") for o in settings.CORS_ORIGINS.split(",") if o.strip()]
 
 # fallback dev si variable absente
 if not origins:
@@ -22,6 +24,7 @@ if not origins:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -52,3 +55,6 @@ app.include_router(edit_move)
 
 from routes.auth import router as auth_router
 app.include_router(auth_router)
+
+from routes.reports import router as reports_router
+app.include_router(reports_router)
