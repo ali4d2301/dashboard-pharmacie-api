@@ -69,7 +69,7 @@ def list_product_options(db: Session = Depends(get_db)):
             SELECT code, produit
             FROM {PRODUCTS_TABLE}
             WHERE statut = 'Actif'
-            ORDER BY code ASC, produit ASC
+            ORDER BY produit ASC, code ASC
             """
         )
     ).mappings().all()

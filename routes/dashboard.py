@@ -262,6 +262,7 @@ SELECT
   COALESCE(mv.qte_sortie, 0) AS quantite_sortie,
   cur.stock AS sdu,
   cur.cmm AS cmm,
+  cur.msd AS msd,
   cur.etat AS etat_stock,
   ne.prochaine_peremption AS prochaine_peremption,
   neq.quantite_prochaine_peremption AS quantite_prochaine_peremption
