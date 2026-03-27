@@ -17,6 +17,13 @@ app = FastAPI(
 # Autoriser les origines (Render / dev / prod)
 origins = [o.strip().rstrip("/") for o in settings.CORS_ORIGINS.split(",") if o.strip()]
 
+# Garder les deux fronts accessibles pendant la bascule de domaine.
+fallback_site_origins = [
+    "https://pharmacie-management.netlify.app",
+    "https://pharmacie-management.metric-sis.com",
+]
+origins = list(dict.fromkeys([*origins, *fallback_site_origins]))
+
 # fallback dev si variable absente
 if not origins:
     origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
